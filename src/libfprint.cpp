@@ -72,6 +72,7 @@ void fpreader::Init(Handle<Object> exports) {
     tpl->InstanceTemplate()->SetInternalFieldCount(3);
 
     NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "enroll_finger", enroll_finger);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("enroll_stages"), fpreader::enroll_stages);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("supports_imaging"), fpreader::supports_imaging);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("supports_identification"), fpreader::supports_identification);
@@ -121,6 +122,62 @@ NAN_GETTER(fpreader::img_height)
     NanReturnValue(NanNew(fp_dev_get_img_height(r->_dev)));
 }
 
+int enrolling = 0;
+
+void enroll_worker::Execute()
+{
+    struct fp_print_data* print;
+    struct fp_img* image;
+    result = fp_enroll_finger_img(_dev, &print, &image);
+
+    if (result == FP_ENROLL_COMPLETE)
+    {
+        print_data_len = fp_print_data_get_data(print, &print_data);
+    }
+
+    fp_img_standardize(image);
+    iheight = fp_img_get_height(image);
+    iwidth = fp_img_get_width(image);
+    isize = iheight * iwidth;
+
+
+    if (isize != 0)
+    {
+        image_data = new char[iwidth * isize];
+        memcpy(image_data, fp_img_get_data(image), isize);
+    }
+    fp_img_free(image);
+}
+
+void enroll_worker::HandleOKCallback()
+{
+    NanScope();
+
+    const unsigned int argc = 5;
+    Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
+    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
+    Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+
+    enrolling = 0;
+    callback->Call(argc, argv);
+}
+
+NAN_METHOD(fpreader::enroll_finger)
+{
+    NanScope();
+
+    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+    if (!enrolling)
+    {
+        enrolling = 1;
+        NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
+        NanReturnValue(NanTrue());
+    }
+    else {
+        NanReturnValue(NanFalse());
+    }
+}
+
 
 NAN_METHOD(fpreader::New)
 {
@@ -134,6 +191,7 @@ NAN_METHOD(fpreader::New)
         if (handle > count) { NanReturnNull(); } //invalid handle
         fpreader* r = new fpreader(handle);
         r->Wrap(args.This());
+        enrolling = 0;
         NanReturnValue(args.This());
     }
     else {

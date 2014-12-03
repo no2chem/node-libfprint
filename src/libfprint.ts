@@ -13,6 +13,17 @@ var events = require('events');
 
 var log;
 
+export enum fp_enroll_result
+{
+    ENROLL_COMPLETE = 1,
+    ENROLL_FAIL = 2,
+    ENROLL_PASS = 3,
+    ENROLL_RETRY = 100,
+    ENROLL_RETRY_TOO_SHORT = 101,
+    ENROLL_RETRY_CENTER_FINGER = 102,
+    ENROLL_RETRY_REMOVE_FINGER = 103
+}
+
 export class fpreader {
     private wrapped;
 
@@ -24,6 +35,30 @@ export class fpreader {
 
     close = () => {
         this.wrapped.close();
+    }
+
+    start_enroll = (callback : (err, result : fp_enroll_result, fpdata : Buffer, fpimage: Buffer, height : Number, width : Number) => void) : void => {
+        if (!this.wrapped.enroll_finger(
+                function (result: fp_enroll_result, fpdata, fpimage, height : number, width: number)
+                {
+                    var err = null;
+                    if (result != fp_enroll_result.ENROLL_COMPLETE)
+                    {
+                        err = fp_enroll_result[result];
+                    }
+                    if (fpdata !== null && fpdata !== undefined)
+                    {
+                        var data = new Buffer(fpdata.length);
+                        fpdata.copy(data);
+                    }
+                    var image = new Buffer(fpimage.length);
+                    fpimage.copy(image);
+                    callback(err, result, data, image, height, width);
+                }
+                ))
+        {
+            callback("Enroll in progress!", null, null, null, null, null);
+        }
     }
 
     constructor(fpinstance) {
