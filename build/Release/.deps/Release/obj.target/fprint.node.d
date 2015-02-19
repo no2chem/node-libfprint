@@ -1,0 +1,1 @@
+cmd_Release/obj.target/fprint.node := flock ./Release/linker.lock g++ -shared -pthread -rdynamic -m32  -Wl,-soname=fprint.node -o Release/obj.target/fprint.node -Wl,--start-group Release/obj.target/fprint/src/libfprint.o -Wl,--end-group -lfprint
