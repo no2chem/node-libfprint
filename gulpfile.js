@@ -1,5 +1,5 @@
 var gulp = require('gulp');
-var ts = require('gulp-typescript');
+var ts = require('gulp-type');
 var tsd = require('gulp-tsd');
 var sourcemaps = require('gulp-sourcemaps');
 var del = require('del');
