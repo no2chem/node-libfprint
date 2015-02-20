@@ -17,6 +17,9 @@ export declare class fpreader {
     img_height: number;
     close: () => void;
     start_enroll: (callback: (err: any, result: fp_enroll_result, fpdata: Buffer, fpimage: Buffer, height: Number, width: Number) => void) => void;
+    stop_enroll: () => void;
+    start_identify: (callback: (err: any, success: any) => void) => void;
+    stop_identify: () => void;
     constructor(fpinstance: any);
 }
 export declare class fprint {
