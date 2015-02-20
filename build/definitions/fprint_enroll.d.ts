@@ -1,4 +1,3 @@
-/// <reference path="../typings/tsd.d.ts" />
 declare var promise: any;
 declare var libfprint: any;
 declare var sprintf: any;
