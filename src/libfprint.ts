@@ -37,28 +37,58 @@ export class fpreader {
         this.wrapped.close();
     }
 
+    // Start enrolling a fingerprint
     start_enroll = (callback : (err, result : fp_enroll_result, fpdata : Buffer, fpimage: Buffer, height : Number, width : Number) => void) : void => {
+    
+        // tell the fpreader to begin the enroll finger process
         if (!this.wrapped.enroll_finger(
+                // Enroll finger has completed
                 function (result: fp_enroll_result, fpdata, fpimage, height : number, width: number)
                 {
                     var err = null;
+
+                    // If the result was not a successful enrollment
                     if (result != fp_enroll_result.ENROLL_COMPLETE)
                     {
+                        // store error code in err
                         err = fp_enroll_result[result];
                     }
+
+                    // check the fpdata for completeness
                     if (fpdata !== null && fpdata !== undefined)
                     {
                         var data = new Buffer(fpdata.length);
                         fpdata.copy(data);
                     }
+
+                    // shouldn't we check these as well? TODO
                     var image = new Buffer(fpimage.length);
                     fpimage.copy(image);
+
+                    // callback to fp_server
                     callback(err, result, data, image, height, width);
                 }
-                ))
-        {
+        )) {
+            // Not finished yet!
             callback("Enroll in progress!", null, null, null, null, null);
         }
+    }
+
+    // Stop enrolling a fingerprint
+    stop_enroll = () : void => {
+        // tell the fp.reader to stop enrollment (if it is enrolling)
+        this.wrapped.stop_enroll_finger();
+    }
+
+    // Start identifying a fingerprint
+    start_identify = (callback : (err, success) => void) : void => {
+        // TODO
+        callback(null,null);
+    }
+
+    // Stop identifying a fingerprint
+    stop_identify = () : void => {
+        this.wrapped.stop_identify_finger();
     }
 
     constructor(fpinstance) {

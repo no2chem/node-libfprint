@@ -122,6 +122,12 @@ NAN_GETTER(fpreader::img_height)
     NanReturnValue(NanNew(fp_dev_get_img_height(r->_dev)));
 }
 
+
+
+
+/****** begin functions of interest ******/
+
+// really should be using a mutex to lock the reader when it's in use
 int enrolling = 0;
 
 void enroll_worker::Execute()
@@ -177,6 +183,33 @@ NAN_METHOD(fpreader::enroll_finger)
         NanReturnValue(NanFalse());
     }
 }
+
+NAN_METHOD(fpreader::stop_enroll_finger)
+{
+    NanScope();
+
+    // test
+    NanReturnValue(NanFalse());
+}
+
+NAN_METHOD(fpreader::identify_finger)
+{
+    NanScope();
+
+    // test
+    NanReturnValue(NanFalse());
+}
+
+NAN_METHOD(fpreader::stop_identify_finger)
+{
+    NanScope();
+
+    // test
+    NanReturnValue(NanFalse());
+}
+
+/****** end functions of interest *******/
+
 
 
 NAN_METHOD(fpreader::New)
