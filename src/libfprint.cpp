@@ -172,72 +172,72 @@ void enroll_worker::HandleOKCallback()
     callback->Call(argc, argv);
 }
 
-// NAN_METHOD(fpreader::enroll_finger)
-// {
-//     NanScope();
-
-//     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
-//     if (!enrolling)
-//     {
-//         enrolling = 1;
-//         NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
-//         NanReturnValue(NanTrue());
-//     }
-//     else {
-//         NanReturnValue(NanFalse());
-//     }
-// }
-
-// function for starting the asynchronous finger enrollment process
-fpreader* test;
 NAN_METHOD(fpreader::enroll_finger)
 {
     NanScope();
 
-    // get the reader's handle
     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
-
-    // TEST
-    test = r;
-
-    // this should absolutely be a mutex
     if (!enrolling)
     {
         enrolling = 1;
-
-        // store a pointer to the callback function for later :)
-        //NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
-        r->enroll_callback = new NanCallback(args[0].As<Function>());
-
-        // start enrolling async!
-        //fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
-        int newresult = fp_async_enroll_start(r->_dev, NULL, NULL);
-        if (newresult < 0) {
-            newresult = 100;
-        } else if (newresult == 0) {
-            newresult = 101;
-        } else {
-            newresult = 102;
-        }
-
-
-        // TEST
-        const unsigned int argc = 5;
-        int iheight = 0;
-        int iwidth = 0;
-        //int newresult = 2;
-        Local<Value> fpimage = (Local<Value>) NanNull();
-        Local<Value> fpdata = (Local<Value>) NanNull();
-        Local<Value> argv[argc] = { NanNew(newresult), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
-        enrolling = 0;
-        r->enroll_callback->Call(argc, argv);
-
+        NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
         NanReturnValue(NanTrue());
     }
     else {
         NanReturnValue(NanFalse());
     }
 }
+
+// // function for starting the asynchronous finger enrollment process
+// fpreader* test;
+// NAN_METHOD(fpreader::enroll_finger)
+// {
+//     NanScope();
+
+//     // get the reader's handle
+//     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+
+//     // TEST
+//     test = r;
+
+//     // this should absolutely be a mutex
+//     if (!enrolling)
+//     {
+//         enrolling = 1;
+
+//         // store a pointer to the callback function for later :)
+//         //NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
+//         r->enroll_callback = new NanCallback(args[0].As<Function>());
+
+//         // start enrolling async!
+//         //fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
+//         int newresult = fp_async_enroll_start(r->_dev, NULL, NULL);
+//         if (newresult < 0) {
+//             newresult = 100;
+//         } else if (newresult == 0) {
+//             newresult = 101;
+//         } else {
+//             newresult = 102;
+//         }
+
+
+//         // TEST
+//         const unsigned int argc = 5;
+//         int iheight = 0;
+//         int iwidth = 0;
+//         //int newresult = 2;
+//         Local<Value> fpimage = (Local<Value>) NanNull();
+//         Local<Value> fpdata = (Local<Value>) NanNull();
+//         Local<Value> argv[argc] = { NanNew(newresult), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+//         enrolling = 0;
+//         r->enroll_callback->Call(argc, argv);
+
+//         NanReturnValue(NanTrue());
+//     }
+//     else {
+//         NanReturnValue(NanFalse());
+//     }
+// }
 
 // function to stop an asynchronous enrollment
 NAN_METHOD(fpreader::stop_enroll_finger)
