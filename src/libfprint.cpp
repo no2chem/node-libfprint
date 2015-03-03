@@ -73,6 +73,9 @@ void fpreader::Init(Handle<Object> exports) {
 
     NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
     NODE_SET_PROTOTYPE_METHOD(tpl, "enroll_finger", enroll_finger);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "stop_enroll_finger", enroll_finger);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "identify_finger", enroll_finger);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "stop_identify_finger", enroll_finger);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("enroll_stages"), fpreader::enroll_stages);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("supports_imaging"), fpreader::supports_imaging);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("supports_identification"), fpreader::supports_identification);
