@@ -52,21 +52,24 @@ export class fpreader {
                     {
                         // store error code in err
                         err = fp_enroll_result[result];
+                        callback(err,null, null, null, null, null);
                     }
-
-                    // check the fpdata for completeness
-                    if (fpdata !== null && fpdata !== undefined)
+                    else 
                     {
-                        var data = new Buffer(fpdata.length);
-                        fpdata.copy(data);
+                        // check the fpdata for completeness
+                        if (fpdata !== null && fpdata !== undefined)
+                        {
+                            var data = new Buffer(fpdata.length);
+                            fpdata.copy(data);
+                        }
+
+                        // shouldn't we check these as well? TODO
+                        var image = new Buffer(fpimage.length);
+                        fpimage.copy(image);
+
+                        // callback to fp_server
+                        callback(err, result, data, image, height, width);
                     }
-
-                    // shouldn't we check these as well? TODO
-                    var image = new Buffer(fpimage.length);
-                    fpimage.copy(image);
-
-                    // callback to fp_server
-                    callback(err, result, data, image, height, width);
                 }
         )) {
             // Not finished yet!
