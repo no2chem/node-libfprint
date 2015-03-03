@@ -189,12 +189,16 @@ void enroll_worker::HandleOKCallback()
 // }
 
 // function for starting the asynchronous finger enrollment process
+fpreader* test;
 NAN_METHOD(fpreader::enroll_finger)
 {
     NanScope();
 
     // get the reader's handle
     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+
+    // TEST
+    test = r;
 
     // this should absolutely be a mutex
     if (!enrolling)
@@ -377,19 +381,30 @@ void enroll_stage_cb(struct fp_dev *dev,
                      struct fp_print_data *print,
                      struct fp_img *img,
                      void *user_data) {
+
+  // TEST
+    const unsigned int argc = 5;
+        int iheight = 0;
+        int iwidth = 0;
+        int newresult = 2;
+        Local<Value> fpimage = (Local<Value>) NanNull();
+        Local<Value> fpdata = (Local<Value>) NanNull();
+        Local<Value> argv[argc] = { NanNew(newresult), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+        enrolling = 0;
+  test->enroll_callback->Call(argc, argv);
   if(user_data) {
     //((fpreader*) user_data)->EnrollStageCallback(result, print, img);
 
-        // test the callback
-        const unsigned int argc = 5;
-        int iheight = 0;
-        int iwidth = 0;
-        int result = 2;
-        Local<Value> fpimage = (Local<Value>) NanNull();
-        Local<Value> fpdata = (Local<Value>) NanNull();
-        Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
-        enrolling = 0;
-        ((fpreader*) user_data)->enroll_callback->Call(argc, argv);
+        // TEST the callback
+        //const unsigned int argc = 5;
+        //int iheight = 0;
+        //int iwidth = 0;
+        //int result = 2;
+        //Local<Value> fpimage = (Local<Value>) NanNull();
+        //Local<Value> fpdata = (Local<Value>) NanNull();
+        //Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+        //enrolling = 0;
+        //test->enroll_callback->Call(argc, argv);
   }
 }
 void enroll_stop_cb(struct fp_dev *dev,
