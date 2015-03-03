@@ -88,9 +88,10 @@ export class fpreader {
     }
 
     // Stop identifying a fingerprint
-    stop_identify = () : void => {
-        // TODO
+    stop_identify = (callback : () => void) : void => {
+        // tell the fp.reader to stop identifying (if it is identifying)
         this.wrapped.stop_identify_finger();
+        callback();
     }
 
     constructor(fpinstance) {
