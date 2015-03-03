@@ -206,18 +206,7 @@ NAN_METHOD(fpreader::enroll_finger)
         r->enroll_callback = new NanCallback(args[0].As<Function>());
 
         // start enrolling async!
-        //fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
-
-        // test the callback
-        const unsigned int argc = 5;
-        int iheight = 0;
-        int iwidth = 0;
-        int result = 2;
-        Local<Value> fpimage = (Local<Value>) NanNull();
-        Local<Value> fpdata = (Local<Value>) NanNull();
-        Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
-        enrolling = 0;
-        r->enroll_callback->Call(argc, argv);
+        fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
 
         NanReturnValue(NanTrue());
     }
@@ -389,7 +378,18 @@ void enroll_stage_cb(struct fp_dev *dev,
                      struct fp_img *img,
                      void *user_data) {
   if(user_data) {
-    ((fpreader*) user_data)->EnrollStageCallback(result, print, img);
+    //((fpreader*) user_data)->EnrollStageCallback(result, print, img);
+
+        // test the callback
+        const unsigned int argc = 5;
+        int iheight = 0;
+        int iwidth = 0;
+        int result = 2;
+        Local<Value> fpimage = (Local<Value>) NanNull();
+        Local<Value> fpdata = (Local<Value>) NanNull();
+        Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+        enrolling = 0;
+        ((fpreader*) user_data)->enroll_callback->Call(argc, argv);
   }
 }
 void enroll_stop_cb(struct fp_dev *dev,
