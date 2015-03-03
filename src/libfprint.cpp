@@ -211,18 +211,26 @@ NAN_METHOD(fpreader::enroll_finger)
 
         // start enrolling async!
         //fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
-        fp_async_enroll_start(r->_dev, NULL, NULL);
+        int newresult = fp_async_enroll_start(r->_dev, NULL, NULL);
+        if (newresult < 0) {
+            newresult = 100;
+        } else if (newresult == 0) {
+            newresult = 101;
+        } else {
+            newresult = 102;
+        }
+
 
         // TEST
-        /*const unsigned int argc = 5;
+        const unsigned int argc = 5;
         int iheight = 0;
         int iwidth = 0;
-        int newresult = 2;
+        //int newresult = 2;
         Local<Value> fpimage = (Local<Value>) NanNull();
         Local<Value> fpdata = (Local<Value>) NanNull();
         Local<Value> argv[argc] = { NanNew(newresult), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
         enrolling = 0;
-        r->enroll_callback->Call(argc, argv);*/
+        r->enroll_callback->Call(argc, argv);
 
         NanReturnValue(NanTrue());
     }
