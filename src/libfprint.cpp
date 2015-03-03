@@ -249,6 +249,7 @@ NAN_METHOD(fpreader::stop_enroll_finger)
 
     // stop the enrollment immediately
     fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
+    enrolling = 0;
 
     NanReturnValue(NanTrue());
 }
