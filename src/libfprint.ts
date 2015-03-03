@@ -75,9 +75,10 @@ export class fpreader {
     }
 
     // Stop enrolling a fingerprint
-    stop_enroll = () : void => {
+    stop_enroll = (callback : () => void) : void => {
         // tell the fp.reader to stop enrollment (if it is enrolling)
         this.wrapped.stop_enroll_finger();
+        callback();
     }
 
     // Start identifying a fingerprint
@@ -88,6 +89,7 @@ export class fpreader {
 
     // Stop identifying a fingerprint
     stop_identify = () : void => {
+        // TODO
         this.wrapped.stop_identify_finger();
     }
 
