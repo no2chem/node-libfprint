@@ -203,10 +203,10 @@ NAN_METHOD(fpreader::enroll_finger)
 
         // store a pointer to the callback function for later :)
         //NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
-        enroll_callback = new NanCallback(args[0].As<Function>());
+        r->enroll_callback = new NanCallback(args[0].As<Function>());
 
         // start enrolling async!
-        fp_async_enroll_start(r->_dev, &enroll_stage_cb, args.This());
+        fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
         NanReturnValue(NanTrue());
     }
     else {
@@ -223,7 +223,9 @@ NAN_METHOD(fpreader::stop_enroll_finger)
     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
 
     // stop the enrollment immediately
-    fp_async_enroll_stop(r->_dev, &enroll_stop_cb, args.This());
+    fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
+
+    NanReturnValue(NanTrue());
 }
 
 NAN_METHOD(fpreader::identify_finger)
@@ -279,8 +281,9 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
     char* image_data;
 
     // get the fpreader and tell it to stop enrolling
-    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
-    fp_async_enroll_stop(r->_dev, &enroll_stop_cb, args.This());
+    //fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+    fpreader* r = this;
+    fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
 
     // if the result of the callback is a success, happy day
     if (result == FP_ENROLL_COMPLETE)

@@ -16,9 +16,9 @@ export declare class fpreader {
     public img_height: number;
     public close: () => void;
     public start_enroll: (callback: (err: any, result: fp_enroll_result, fpdata: Buffer, fpimage: Buffer, height: Number, width: Number) => void) => void;
-    public stop_enroll: () => void;
+    public stop_enroll: (callback: () => void) => void;
     public start_identify: (callback: (err: any, success: any) => void) => void;
-    public stop_identify: () => void;
+    public stop_identify: (callback: () => void) => void;
     constructor(fpinstance: any);
 }
 export declare class fprint {

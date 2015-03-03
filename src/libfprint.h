@@ -9,6 +9,11 @@ class fpreader : public node::ObjectWrap {
         static void Init(v8::Handle<v8::Object> exports);
         fp_dev* _dev;
         NanCallback *enroll_callback;
+
+        void EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img);
+        void EnrollStopCallback();
+        // void IdentifyCallback(int result, size_t match_offset, struct fp_img *img);
+        // void IdentifyStopCallback();
     private:
         explicit fpreader(unsigned int handle =0);
         ~fpreader();
@@ -20,11 +25,6 @@ class fpreader : public node::ObjectWrap {
         static NAN_METHOD(stop_enroll_finger);
         static NAN_METHOD(identify_finger);
         static NAN_METHOD(stop_identify_finger);
-
-        void EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img);
-        void EnrollStopCallback();
-        // void IdentifyCallback(int result, size_t match_offset, struct fp_img *img);
-        // void IdentifyStopCallback();
 
         static NAN_GETTER(enroll_stages);
         static NAN_GETTER(supports_imaging);
