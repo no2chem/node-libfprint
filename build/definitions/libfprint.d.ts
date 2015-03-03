@@ -19,6 +19,7 @@ export declare class fpreader {
     public stop_enroll: (callback: () => void) => void;
     public start_identify: (callback: (err: any, success: any) => void) => void;
     public stop_identify: (callback: () => void) => void;
+    public handle_events: () => void;
     constructor(fpinstance: any);
 }
 export declare class fprint {

@@ -59,6 +59,10 @@ NAN_METHOD(discover)
 
 fpreader::fpreader(unsigned int handle)  {
     this->_dev = fp_dev_open(devices[handle]);
+
+    // timeout for the event handler
+    this->handle_fp_timeout.tv_sec = 0;
+    this->handle_fp_timeout.tv_usec = 100*1000;
 }
 
 fpreader::~fpreader() {
@@ -270,7 +274,8 @@ NAN_METHOD(fpreader::handle_events)
     NanScope();
 
     // handle events
-    fp_handle_events_timeout(&handle_fp_timeout);
+    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+    fp_handle_events_timeout(&(r->handle_fp_timeout));
 
     NanReturnValue(NanTrue());
 }

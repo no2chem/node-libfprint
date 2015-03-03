@@ -58,7 +58,6 @@
     "sign_git_tag": "",
     "always_auth": "",
     "user_agent": "node/v0.10.25 linux ia32",
-    "build_from_source": "true",
     "bin_links": "true",
     "description": "true",
     "fetch_retries": "2",

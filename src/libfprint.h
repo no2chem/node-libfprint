@@ -11,8 +11,6 @@ class fpreader : public node::ObjectWrap {
         NanCallback *enroll_callback;
 
         struct timeval handle_fp_timeout;
-        handle_fp_timeout.tv_sec = 0;
-        handle_fp_timeout.tv_usec = 100*1000;
 
         void EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img);
         void EnrollStopCallback();
