@@ -89,12 +89,14 @@ export class fpreader {
     stop_enroll = (callback : (err,result) => void) : void => {
         // tell the fp.reader to stop enrollment (if it is enrolling)
         this.wrapped.stop_enroll_finger(
-            function (success)
+            function (result: fp_stop_result)
             {
-                if (success) {
-                    callback(null,true);
+                var err = null;
+                if (result == fp_stop_result.STOP_SUCCESS) {
+                    callback(err, true);
                 } else {
-                    callback(true,null);
+                    err = fp_stop_result[result];
+                    callback(err, null);
                 }
             }
         );

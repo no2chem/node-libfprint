@@ -8,6 +8,11 @@ export declare enum fp_enroll_result {
     ENROLL_RETRY_REMOVE_FINGER = 103,
     ENROLL_CANCELLED = 200,
 }
+export declare enum fp_stop_result {
+    STOP_SUCCESS = 1,
+    STOP_FAIL = 2,
+    STOP_IGNORE = 3,
+}
 export declare class fpreader {
     private wrapped;
     public enroll_stages: number;
