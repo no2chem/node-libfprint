@@ -250,7 +250,8 @@ NAN_METHOD(fpreader::stop_enroll_finger)
         int start_code = fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
         if (start_code < 0) {
             // the enrollment failed to stop... it is presumed alive
-            r->stop_enroll_callback->Call(1, false); // failure
+            Local<Value> argv2[1] = {NanFalse()};
+            r->stop_enroll_callback->Call(1, argv2); // failure
         } else {
             // enrollment has stopped successfully, which means
             // we need to trigger the enroll function's callback
@@ -261,10 +262,12 @@ NAN_METHOD(fpreader::stop_enroll_finger)
             Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
             enrolling = 0;
             r->enroll_callback->Call(argc, argv);
-            r->stop_enroll_callback->Call(1, true); // success
+            Local<Value> argv2[1] = {NanTrue()};
+            r->stop_enroll_callback->Call(1, argv2); // success
         }
     } else {
-        r->stop_enroll_callback->Call(1, false); // failure, no enroll running
+        Local<Value> argv2[1] = {NanFalse()};
+        r->stop_enroll_callback->Call(1, argv2); // failure, no enroll running
     }
 
     NanReturnValue(NanTrue());
