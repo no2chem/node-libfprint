@@ -10,6 +10,10 @@ class fpreader : public node::ObjectWrap {
         fp_dev* _dev;
         NanCallback *enroll_callback;
 
+        struct timeval handle_fp_timeout;
+        handle_fp_timeout.tv_sec = 0;
+        handle_fp_timeout.tv_usec = 100*1000;
+
         void EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img);
         void EnrollStopCallback();
         // void IdentifyCallback(int result, size_t match_offset, struct fp_img *img);
@@ -25,6 +29,7 @@ class fpreader : public node::ObjectWrap {
         static NAN_METHOD(stop_enroll_finger);
         static NAN_METHOD(identify_finger);
         static NAN_METHOD(stop_identify_finger);
+        static NAN_METHOD(handle_events);
 
         static NAN_GETTER(enroll_stages);
         static NAN_GETTER(supports_imaging);

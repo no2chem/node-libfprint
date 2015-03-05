@@ -97,6 +97,12 @@ export class fpreader {
         callback();
     }
 
+    // Driver for async fingerprint activity
+    handle_events = () : void => {
+        // tell the fp.reader to handle events, i.e. advance the reader a step
+        this.wrapped.handle_events();
+    }
+
     constructor(fpinstance) {
         this.wrapped = fpinstance;
 

@@ -71,11 +71,13 @@ void fpreader::Init(Handle<Object> exports) {
     tpl->SetClassName(NanNew("fpreader"));
     tpl->InstanceTemplate()->SetInternalFieldCount(3);
 
+    // Offer up the API to libfprint.ts
     NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
     NODE_SET_PROTOTYPE_METHOD(tpl, "enroll_finger", enroll_finger);
     NODE_SET_PROTOTYPE_METHOD(tpl, "stop_enroll_finger", stop_enroll_finger);
     NODE_SET_PROTOTYPE_METHOD(tpl, "identify_finger", identify_finger);
     NODE_SET_PROTOTYPE_METHOD(tpl, "stop_identify_finger", stop_identify_finger);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "handle_events", handle_events);
 
     tpl->PrototypeTemplate()->SetAccessor(NanNew("enroll_stages"), fpreader::enroll_stages);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("supports_imaging"), fpreader::supports_imaging);
@@ -134,110 +136,90 @@ NAN_GETTER(fpreader::img_height)
 // really should be using a mutex to lock the reader when it's in use
 int enrolling = 0;
 
-void enroll_worker::Execute()
-{
-    struct fp_print_data* print;
-    struct fp_img* image;
-    result = fp_enroll_finger_img(_dev, &print, &image);
+// void enroll_worker::Execute()
+// {
+//     struct fp_print_data* print;
+//     struct fp_img* image;
+//     result = fp_enroll_finger_img(_dev, &print, &image);
 
-    if (result == FP_ENROLL_COMPLETE)
-    {
-        print_data_len = fp_print_data_get_data(print, &print_data);
-    }
+//     if (result == FP_ENROLL_COMPLETE)
+//     {
+//         print_data_len = fp_print_data_get_data(print, &print_data);
+//     }
 
-    fp_img_standardize(image);
-    iheight = fp_img_get_height(image);
-    iwidth = fp_img_get_width(image);
-    isize = iheight * iwidth;
+//     fp_img_standardize(image);
+//     iheight = fp_img_get_height(image);
+//     iwidth = fp_img_get_width(image);
+//     isize = iheight * iwidth;
 
 
-    if (isize != 0)
-    {
-        image_data = new char[iwidth * isize];
-        memcpy(image_data, fp_img_get_data(image), isize);
-    }
-    fp_img_free(image);
-}
+//     if (isize != 0)
+//     {
+//         image_data = new char[iwidth * isize];
+//         memcpy(image_data, fp_img_get_data(image), isize);
+//     }
+//     fp_img_free(image);
+// }
 
-void enroll_worker::HandleOKCallback()
-{
-    NanScope();
+// void enroll_worker::HandleOKCallback()
+// {
+//     NanScope();
 
-    const unsigned int argc = 5;
-    Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
-    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
-    Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+//     const unsigned int argc = 5;
+//     Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
+//     Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
+//     Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
 
-    enrolling = 0;
-    callback->Call(argc, argv);
-}
+//     enrolling = 0;
+//     callback->Call(argc, argv);
+// }
 
-NAN_METHOD(fpreader::enroll_finger)
-{
-    NanScope();
-
-    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
-    if (!enrolling)
-    {
-        enrolling = 1;
-        NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
-        NanReturnValue(NanTrue());
-    }
-    else {
-        NanReturnValue(NanFalse());
-    }
-}
-
-// // function for starting the asynchronous finger enrollment process
-// fpreader* test;
 // NAN_METHOD(fpreader::enroll_finger)
 // {
 //     NanScope();
 
-//     // get the reader's handle
 //     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
-
-//     // TEST
-//     test = r;
-
-//     // this should absolutely be a mutex
 //     if (!enrolling)
 //     {
 //         enrolling = 1;
-
-//         // store a pointer to the callback function for later :)
-//         //NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
-//         r->enroll_callback = new NanCallback(args[0].As<Function>());
-
-//         // start enrolling async!
-//         //fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
-//         int newresult = fp_async_enroll_start(r->_dev, NULL, NULL);
-//         if (newresult < 0) {
-//             newresult = 100;
-//         } else if (newresult == 0) {
-//             newresult = 101;
-//         } else {
-//             newresult = 102;
-//         }
-
-
-//         // TEST
-//         const unsigned int argc = 5;
-//         int iheight = 0;
-//         int iwidth = 0;
-//         //int newresult = 2;
-//         Local<Value> fpimage = (Local<Value>) NanNull();
-//         Local<Value> fpdata = (Local<Value>) NanNull();
-//         Local<Value> argv[argc] = { NanNew(newresult), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
-//         enrolling = 0;
-//         r->enroll_callback->Call(argc, argv);
-
+//         NanAsyncQueueWorker(new enroll_worker(r->_dev, new NanCallback(args[0].As<Function>())));
 //         NanReturnValue(NanTrue());
 //     }
 //     else {
 //         NanReturnValue(NanFalse());
 //     }
 // }
+
+// // function for starting the asynchronous finger enrollment process
+fpreader* test;
+NAN_METHOD(fpreader::enroll_finger)
+{
+    NanScope();
+
+    // get the reader's handle
+    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+
+    // this should absolutely be a mutex
+    if (!enrolling)
+    {
+        // lock the mutex
+        enrolling = 1;
+
+        // store a pointer to the callback function for later :)
+        r->enroll_callback = new NanCallback(args[0].As<Function>());
+
+        // start enrolling async!
+        int start_code = fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
+        if (start_code < 0) {
+            // TODO: the enroll process never started... need to fail out gracefully
+        }
+
+        NanReturnValue(NanTrue());
+    }
+    else {
+        NanReturnValue(NanFalse());
+    }
+}
 
 // function to stop an asynchronous enrollment
 NAN_METHOD(fpreader::stop_enroll_finger)
@@ -249,14 +231,24 @@ NAN_METHOD(fpreader::stop_enroll_finger)
 
     // stop the enrollment immediately
     fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
+
+    // free up the lock
     enrolling = 0;
 
     NanReturnValue(NanTrue());
 }
 
+/////// from fpserv_async.cpp ////////
+// int fpreader::StartIdentify() {
+//   printf("StartIdentify()\n");
+//   state = IDENTIFYING;
+//   return fp_async_identify_start(device, user_array, &identify_cb, this);
+// }
 NAN_METHOD(fpreader::identify_finger)
 {
     NanScope();
+
+    // fp_async_identify_start(device, user_array, &identify_cb, this);
 
     // test
     NanReturnValue(NanFalse());
@@ -266,32 +258,22 @@ NAN_METHOD(fpreader::stop_identify_finger)
 {
     NanScope();
 
+    // fp_async_identify_stop(device, &identify_stop_cb, this);
+
     // test
     NanReturnValue(NanFalse());
 }
 
-/////// from fpserv_async.cpp ////////
-// int fpreader::StartEnroll() {
-//   printf("StartEnroll()\n");
-//   state = ENROLLING;
-//   return fp_async_enroll_start(device, &enroll_stage_cb, this);
-// }
+// Required event driver for asynchronous activity
+NAN_METHOD(fpreader::handle_events)
+{
+    NanScope();
 
-// int fpreader::StopEnroll() {
-//   state = WAITING;
-//   printf("StopEnroll()\n");
-//   return fp_async_enroll_stop(device, &enroll_stop_cb, this);
-// }
-// int fpreader::StartIdentify() {
-//   printf("StartIdentify()\n");
-//   state = IDENTIFYING;
-//   return fp_async_identify_start(device, user_array, &identify_cb, this);
-// }
-// int fpreader::StopIdentify() {
-//   state = WAITING;
-//   printf("StopIdentify()\n");
-//   return fp_async_identify_stop(device, &identify_stop_cb, this);
-// }
+    // handle events
+    fp_handle_events_timeout(&handle_fp_timeout);
+
+    NanReturnValue(NanTrue());
+}
 
 // This handles the actual enrollment callback
 void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img) {
@@ -404,18 +386,18 @@ void enroll_stage_cb(struct fp_dev *dev,
                      void *user_data) {
 
   if(user_data) {
-    //((fpreader*) user_data)->EnrollStageCallback(result, print, img);
+    ((fpreader*) user_data)->EnrollStageCallback(result, print, img);
 
-        // TEST the callback
-        //const unsigned int argc = 5;
-        //int iheight = 0;
-        //int iwidth = 0;
-        //int result = 2;
-        //Local<Value> fpimage = (Local<Value>) NanNull();
-        //Local<Value> fpdata = (Local<Value>) NanNull();
-        //Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
-        //enrolling = 0;
-        //test->enroll_callback->Call(argc, argv);
+    // TEST the callback
+    //const unsigned int argc = 5;
+    //int iheight = 0;
+    //int iwidth = 0;
+    //int result = 2;
+    //Local<Value> fpimage = (Local<Value>) NanNull();
+    //Local<Value> fpdata = (Local<Value>) NanNull();
+    //Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
+    //enrolling = 0;
+    //test->enroll_callback->Call(argc, argv);
   }
 }
 void enroll_stop_cb(struct fp_dev *dev,
