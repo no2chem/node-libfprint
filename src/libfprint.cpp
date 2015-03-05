@@ -215,7 +215,17 @@ NAN_METHOD(fpreader::enroll_finger)
         // start enrolling async!
         int start_code = fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
         if (start_code < 0) {
-            // TODO: the enroll process never started... need to fail out gracefully
+            // the enroll process never started... need to fail out gracefully
+
+            // build args for the callback
+            const unsigned int argc = 5;
+            Local<Value> fpimage = (Local<Value>) NanNull();
+            Local<Value> fpdata = (Local<Value>) NanNull();
+            Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
+
+            // fire that callback off
+            enrolling = 0;
+            r->enroll_callback->Call(argc, argv);
         }
 
         NanReturnValue(NanTrue());
