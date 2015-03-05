@@ -21,7 +21,8 @@ export enum fp_enroll_result
     ENROLL_RETRY = 100,
     ENROLL_RETRY_TOO_SHORT = 101,
     ENROLL_RETRY_CENTER_FINGER = 102,
-    ENROLL_RETRY_REMOVE_FINGER = 103
+    ENROLL_RETRY_REMOVE_FINGER = 103,
+    ENROLL_CANCELLED = 200 // custom
 }
 
 export class fpreader {

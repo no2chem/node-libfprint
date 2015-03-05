@@ -216,14 +216,11 @@ NAN_METHOD(fpreader::enroll_finger)
         int start_code = fp_async_enroll_start(r->_dev, &enroll_stage_cb, r);
         if (start_code < 0) {
             // the enroll process never started... need to fail out gracefully
-
-            // build args for the callback
+            // ...failing out gracefully
             const unsigned int argc = 5;
             Local<Value> fpimage = (Local<Value>) NanNull();
             Local<Value> fpdata = (Local<Value>) NanNull();
             Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
-
-            // fire that callback off
             enrolling = 0;
             r->enroll_callback->Call(argc, argv);
         }
@@ -244,10 +241,23 @@ NAN_METHOD(fpreader::stop_enroll_finger)
     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
 
     // stop the enrollment immediately
-    fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
+    int start_code = fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
+    if (start_code < 0) {
+        // the enrollment failed to stop... it is presumed alive
+        // ***TODO*** throw some sort of error here
 
-    // free up the lock
-    enrolling = 0;
+
+    } else {
+        // enrollment has stopped successfully, which means
+        // we need to trigger the enroll function's callback
+        // in failure mode
+        const unsigned int argc = 5;
+        Local<Value> fpimage = (Local<Value>) NanNull();
+        Local<Value> fpdata = (Local<Value>) NanNull();
+        Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
+        enrolling = 0;
+        r->enroll_callback->Call(argc, argv);
+    }
 
     NanReturnValue(NanTrue());
 }
@@ -402,17 +412,6 @@ void enroll_stage_cb(struct fp_dev *dev,
 
   if(user_data) {
     ((fpreader*) user_data)->EnrollStageCallback(result, print, img);
-
-    // TEST the callback
-    //const unsigned int argc = 5;
-    //int iheight = 0;
-    //int iwidth = 0;
-    //int result = 2;
-    //Local<Value> fpimage = (Local<Value>) NanNull();
-    //Local<Value> fpdata = (Local<Value>) NanNull();
-    //Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
-    //enrolling = 0;
-    //test->enroll_callback->Call(argc, argv);
   }
 }
 void enroll_stop_cb(struct fp_dev *dev,
