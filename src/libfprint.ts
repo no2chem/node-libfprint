@@ -25,6 +25,13 @@ export enum fp_enroll_result
     ENROLL_CANCELLED = 200 // custom
 }
 
+export enum fp_stop_result
+{
+    STOP_SUCCESS = 1,
+    STOP_FAIL = 2,
+    STOP_IGNORE = 3
+}
+
 export class fpreader {
     private wrapped;
 
