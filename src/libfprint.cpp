@@ -259,7 +259,7 @@ NAN_METHOD(fpreader::stop_enroll_finger)
             const unsigned int argc = 5;
             Local<Value> fpimage = (Local<Value>) NanNull();
             Local<Value> fpdata = (Local<Value>) NanNull();
-            Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
+            Local<Value> argv[argc] = { NanNew(200), fpdata, fpimage, NanNew(0), NanNew(0) };
             enrolling = 0;
             r->enroll_callback->Call(argc, argv);
             Local<Value> argv2[1] = {NanTrue()};
