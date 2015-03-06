@@ -9,6 +9,9 @@ class fpreader : public node::ObjectWrap {
         static void Init(v8::Handle<v8::Object> exports);
         fp_dev* _dev;
         NanCallback *enroll_callback;
+        NanCallback *stop_enroll_callback;
+        NanCallback *identify_callback;
+        NanCallback *stop_identify_callback;
 
         struct timeval handle_fp_timeout;
 

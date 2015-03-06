@@ -240,23 +240,31 @@ NAN_METHOD(fpreader::stop_enroll_finger)
     // get a pointer to the reader
     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
 
-    // stop the enrollment immediately
-    int start_code = fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
-    if (start_code < 0) {
-        // the enrollment failed to stop... it is presumed alive
-        // ***TODO*** throw some sort of error here
+    // pointer to callback
+    r->stop_enroll_callback = new NanCallback(args[0].As<Function>());
 
+    // if enrollment is occuring, stop it
+    if (enrolling) { // TODO mutex this shite 
 
+        // stop the enrollment immediately
+        int start_code = fp_async_enroll_stop(r->_dev, &enroll_stop_cb, r);
+        if (start_code < 0) {
+            // the enrollment failed to stop... it is presumed alive
+            r->stop_enroll_callback->Call(1, false); // failure
+        } else {
+            // enrollment has stopped successfully, which means
+            // we need to trigger the enroll function's callback
+            // in failure mode
+            const unsigned int argc = 5;
+            Local<Value> fpimage = (Local<Value>) NanNull();
+            Local<Value> fpdata = (Local<Value>) NanNull();
+            Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
+            enrolling = 0;
+            r->enroll_callback->Call(argc, argv);
+            r->stop_enroll_callback->Call(1, true); // success
+        }
     } else {
-        // enrollment has stopped successfully, which means
-        // we need to trigger the enroll function's callback
-        // in failure mode
-        const unsigned int argc = 5;
-        Local<Value> fpimage = (Local<Value>) NanNull();
-        Local<Value> fpdata = (Local<Value>) NanNull();
-        Local<Value> argv[argc] = { NanNew(2), fpdata, fpimage, NanNew(0), NanNew(0) };
-        enrolling = 0;
-        r->enroll_callback->Call(argc, argv);
+        r->stop_enroll_callback->Call(1, false); // failure, no enroll running
     }
 
     NanReturnValue(NanTrue());
