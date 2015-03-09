@@ -239,13 +239,13 @@ NAN_METHOD(fpreader::identify_finger)
         identifying = 1;
 
         // ****** TODO this we be an arguement passed in...
-        user_array = NULL; // LOAD ME FROM ARGS
+        r->user_array = NULL; // LOAD ME FROM ARGS
 
         // store a pointer to the callback function for later :)
         r->identify_callback = new NanCallback(args[0].As<Function>());
 
         // start enrolling async!
-        int start_code = fp_async_identify_start(r->_dev, user_array, &identify_cb, r);
+        int start_code = fp_async_identify_start(r->_dev, r->user_array, &identify_cb, r);
         if (start_code < 0) {
             // the identify process never started... need to fail out gracefully
             // ...failing out gracefully
@@ -291,7 +291,7 @@ NAN_METHOD(fpreader::stop_identify_finger)
             // identify function's callback in failure mode
             const unsigned int argc = 5;
             Local<Value> fpimage = (Local<Value>) NanNull();
-            Local<Value> fpindex = (Local<Value>) NanNull();
+            Local<Value> fpindex = NanNew(-1);
             Local<Value> argv[argc] = { NanNew(200), fpindex, fpimage, NanNew(0), NanNew(0) };
             identifying = 0;
             r->identify_callback->Call(argc, argv);
@@ -376,7 +376,6 @@ void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *
     NanScope();
 
     // declare some variables for storage
-    unsigned char* print_data;
     int iheight;
     int iwidth;
     int isize;
@@ -406,7 +405,7 @@ void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *
     // build args for the callback
     const unsigned int argc = 5;
     Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
-    Local<Value> fpindex = (result == FP_ENROLL_COMPLETE) ? NanNew(match_offset) : (Local<Value>) NanNull();
+    Local<Value> fpindex = (result == FP_ENROLL_COMPLETE) ? NanNew(static_cast<int>(match_offset)) : NanNew(-1);
     Local<Value> argv[argc] = { NanNew(result), fpindex, fpimage, NanNew(iheight), NanNew(iwidth) };
 
     // fire that callback off
