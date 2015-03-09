@@ -229,10 +229,39 @@ NAN_METHOD(fpreader::identify_finger)
 {
     NanScope();
 
-    // fp_async_identify_start(device, user_array, &identify_cb, this);
+    // get the reader's handle
+    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
 
-    // test
-    NanReturnValue(NanFalse());
+    // this should absolutely be a mutex
+    if (!identifying)
+    {
+        // lock the mutex
+        identifying = 1;
+
+        // ****** TODO this we be an arguement passed in...
+        user_array = NULL; // LOAD ME FROM ARGS
+
+        // store a pointer to the callback function for later :)
+        r->identify_callback = new NanCallback(args[0].As<Function>());
+
+        // start enrolling async!
+        int start_code = fp_async_identify_start(r->_dev, user_array, &identify_cb, r);
+        if (start_code < 0) {
+            // the identify process never started... need to fail out gracefully
+            // ...failing out gracefully
+            const unsigned int argc = 5;
+            Local<Value> fpimage = (Local<Value>) NanNull();
+            Local<Value> fpindex = (Local<Value>) NanNull();
+            Local<Value> argv[argc] = { NanNew(2), fpindex, fpimage, NanNew(0), NanNew(0) };
+            identifying = 0;
+            r->identify_callback->Call(argc, argv);
+        }
+
+        NanReturnValue(NanTrue());
+    }
+    else {
+        NanReturnValue(NanFalse());
+    }
 }
 
 // function to stop identification
@@ -240,10 +269,44 @@ NAN_METHOD(fpreader::stop_identify_finger)
 {
     NanScope();
 
-    // fp_async_identify_stop(device, &identify_stop_cb, this);
+    // get a pointer to the reader
+    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
 
-    // test
-    NanReturnValue(NanFalse());
+    // pointer to callback
+    r->stop_identify_callback = new NanCallback(args[0].As<Function>());
+
+    // if enrollment is occuring, stop it
+    if (identifying) { // TODO mutex this shite 
+
+        // stop the enrollment immediately
+        int start_code = fp_async_identify_stop(r->_dev, &identify_stop_cb, r);
+        if (start_code < 0) {
+
+            // the enrollment failed to stop... it is presumed alive
+            Local<Value> argv2[1] = {NanNew(2)};
+            r->stop_identify_callback->Call(1, argv2); // failure
+        } else {
+
+            // identification has stopped successfully, which means we need to trigger the 
+            // identify function's callback in failure mode
+            const unsigned int argc = 5;
+            Local<Value> fpimage = (Local<Value>) NanNull();
+            Local<Value> fpindex = (Local<Value>) NanNull();
+            Local<Value> argv[argc] = { NanNew(200), fpindex, fpimage, NanNew(0), NanNew(0) };
+            identifying = 0;
+            r->identify_callback->Call(argc, argv);
+
+            // stop enroll callback success
+            Local<Value> argv2[1] = {NanNew(1)};
+            r->stop_identify_callback->Call(1, argv2); // success
+        }
+    } else {
+        // identification not running, ignore this stop command
+        Local<Value> argv2[1] = {NanNew(3)};
+        r->stop_identify_callback->Call(1, argv2); // ignore
+    }
+
+    NanReturnValue(NanTrue());
 }
 
 // Required event driver for asynchronous activity
@@ -308,53 +371,50 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
 // this handles the enrollment stop callback (hint: does not do anything)
 void fpreader::EnrollStopCallback() {}
 
-// void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *img) {
-//   printf("Identify callbacked\n");
-//   // If we don't immediately stop, the driver gets all excited.
-//   // In our StopIdentify handler, we'll start identifying again
-//   StopIdentify();
+void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *img) {
 
-//   // Mark down that we want to continue identifying
-//   next = IDENTIFYING;
+    NanScope();
 
-//   switch(result) {
-//     case FP_VERIFY_NO_MATCH:
-//       // Did not find
-//       SendBadRead("Fingerprint not recognized.");
-//       break;
-//     case FP_VERIFY_MATCH:
-//       // Found it
-//       SendGoodRead(users[match_offset]);
-//       break;
-//     case FP_VERIFY_RETRY:
-//       // poor scan quality
-//       SendBadRead("Fingerprint failed due to poor scan quality.");
-//       break;
-//     case FP_VERIFY_RETRY_TOO_SHORT:
-//       // swipe too short. Not an issue with this reader.
-//       SendBadRead("Fingerprint failed. Try again.");
-//       break;
-//     case FP_VERIFY_RETRY_CENTER_FINGER:
-//       // center finger.
-//       SendBadRead("Fingerprint failed. Center your finger and try again.");
-//       break;
-//     case FP_VERIFY_RETRY_REMOVE_FINGER:
-//       // pressed too hard
-//       SendBadRead("Fingerprint failed. Lift your finger and try again.");
-//       break;
-//     default:
-//       SendBadRead("Fingerprint failed for an uknown reason.");
-//       break;
-//   }
+    // declare some variables for storage
+    unsigned char* print_data;
+    int iheight;
+    int iwidth;
+    int isize;
+    char* image_data;
 
-//   if(img) {
-//     fp_img_free(img);
-//   }
-// }
+    fpreader* r = this;
+    fp_async_identify_stop(r->_dev, &identify_stop_cb, r);
 
-// void fpreader::IdentifyStopCallback() {
-  
-// }
+    // if the result of the callback is a success, happy day
+    if (result == FP_VERIFY_MATCH)
+    {
+        // TODO do something with match_offset? convert to integer?
+    }
+
+    // TODO we should check for an image first, not all readers support this (ours does)
+    fp_img_standardize(img);
+    iheight = fp_img_get_height(img);
+    iwidth = fp_img_get_width(img);
+    isize = iheight * iwidth;
+    if (isize != 0)
+    {
+        image_data = new char[iwidth * isize];
+        memcpy(image_data, fp_img_get_data(img), isize);
+    }
+    fp_img_free(img);
+
+    // build args for the callback
+    const unsigned int argc = 5;
+    Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
+    Local<Value> fpindex = (result == FP_ENROLL_COMPLETE) ? NanNew(match_offset) : (Local<Value>) NanNull();
+    Local<Value> argv[argc] = { NanNew(result), fpindex, fpimage, NanNew(iheight), NanNew(iwidth) };
+
+    // fire that callback off
+    identifying = 0;
+    r->identify_callback->Call(argc, argv);
+}
+
+void fpreader::IdentifyStopCallback() {}
 
 /* Placeholder callback functions for redirection (left over from old code) */
 void enroll_stage_cb(struct fp_dev *dev,
@@ -373,21 +433,21 @@ void enroll_stop_cb(struct fp_dev *dev,
     ((fpreader*) user_data)->EnrollStopCallback();
   }
 }
-// void identify_cb(struct fp_dev *dev,
-//                  int result,
-//                  size_t match_offset,
-//                  struct fp_img *img,
-//                  void *user_data) {
-//   if(user_data) {
-//     ((fpreader*) user_data)->IdentifyCallback(result, match_offset, img);
-//   }
-// }
-// void identify_stop_cb(struct fp_dev *dev,
-//                       void *user_data) {
-//   if(user_data) {
-//     ((fpreader*) user_data)->IdentifyStopCallback();
-//   }
-// }
+void identify_cb(struct fp_dev *dev,
+                 int result,
+                 size_t match_offset,
+                 struct fp_img *img,
+                 void *user_data) {
+  if(user_data) {
+    ((fpreader*) user_data)->IdentifyCallback(result, match_offset, img);
+  }
+}
+void identify_stop_cb(struct fp_dev *dev,
+                      void *user_data) {
+  if(user_data) {
+    ((fpreader*) user_data)->IdentifyStopCallback();
+  }
+}
 
 /****** end functions of interest *******/
 

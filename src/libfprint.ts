@@ -113,17 +113,56 @@ export class fpreader {
         );
     }
 
+    // ******TODO figure out how to pass an argument down here
+
     // Start identifying a fingerprint
-    start_identify = (callback : (err, success) => void) : void => {
-        // TODO
-        callback(null,null);
+    start_identify = (callback : (err, result : fp_verify_result, fpindex : Number, fpimage: Buffer, height : Number, width : Number) => void) : void => {
+    
+        // tell the fpreader to begin the identify finger process
+        if (!this.wrapped.identify_finger( // ***** TODO pass in the list arg
+                // Identify finger has completed
+                function (result: fp_verify_result, fpindex, fpimage, height : number, width: number)
+                {
+                    var err = null;
+
+                    // If the result was not successful
+                    if (result != fp_verify_result.VERIFY_MATCH)
+                    {
+                        // store error code in err
+                        err = fp_verify_result[result];
+                        callback(err,null, null, null, null, null);
+                    }
+                    else 
+                    {
+                        // shouldn't we check these as well? TODO
+                        var image = new Buffer(fpimage.length);
+                        fpimage.copy(image);
+
+                        // callback to fp_server
+                        callback(err, result, fpindex, image, height, width);
+                    }
+                }
+        )) {
+            // Not finished yet!
+            callback("Identify in progress!", null, null, null, null, null);
+        }
     }
 
     // Stop identifying a fingerprint
-    stop_identify = (callback : () => void) : void => {
-        // tell the fp.reader to stop identifying (if it is identifying)
-        this.wrapped.stop_identify_finger();
-        callback();
+    stop_identify = (callback : (err,result) => void) : void => {
+        // tell the fp.reader to stop identification (if it is identifying)
+        this.wrapped.stop_identify_finger(
+            function (result: fp_stop_result)
+            {
+                var err = null;
+                if (result == fp_stop_result.STOP_SUCCESS) {
+                    callback(err, true);
+                } else {
+                    err = fp_stop_result[result];
+                    callback(err, null);
+                }
+            }
+        );
     }
 
     // Driver for async fingerprint activity
