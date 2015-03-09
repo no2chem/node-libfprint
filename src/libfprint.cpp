@@ -139,6 +139,7 @@ NAN_GETTER(fpreader::img_height)
 
 // really should be using a mutex to lock the reader when it's in use
 int enrolling = 0;
+int identifying = 0;
 
 // // function for starting the asynchronous finger enrollment process
 fpreader* test;
@@ -223,12 +224,7 @@ NAN_METHOD(fpreader::stop_enroll_finger)
     NanReturnValue(NanTrue());
 }
 
-/////// from fpserv_async.cpp ////////
-// int fpreader::StartIdentify() {
-//   printf("StartIdentify()\n");
-//   state = IDENTIFYING;
-//   return fp_async_identify_start(device, user_array, &identify_cb, this);
-// }
+// function to start identification
 NAN_METHOD(fpreader::identify_finger)
 {
     NanScope();
@@ -239,6 +235,7 @@ NAN_METHOD(fpreader::identify_finger)
     NanReturnValue(NanFalse());
 }
 
+// function to stop identification
 NAN_METHOD(fpreader::stop_identify_finger)
 {
     NanScope();
@@ -309,12 +306,7 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
 }
 
 // this handles the enrollment stop callback (hint: does not do anything)
-void fpreader::EnrollStopCallback() {
-  //TODO: assert state == WAITING
-  // state = NONE;
-  // printf("Enroll stopped.\n");
-  // ChangeState(IDENTIFYING);
-}
+void fpreader::EnrollStopCallback() {}
 
 // void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *img) {
 //   printf("Identify callbacked\n");

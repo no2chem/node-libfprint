@@ -17,8 +17,8 @@ class fpreader : public node::ObjectWrap {
 
         void EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img);
         void EnrollStopCallback();
-        // void IdentifyCallback(int result, size_t match_offset, struct fp_img *img);
-        // void IdentifyStopCallback();
+        void IdentifyCallback(int result, size_t match_offset, struct fp_img *img);
+        void IdentifyStopCallback();
     private:
         explicit fpreader(unsigned int handle =0);
         ~fpreader();
@@ -61,7 +61,7 @@ class enroll_worker : public NanAsyncWorker {
 
 void enroll_stage_cb(struct fp_dev *dev, int result, struct fp_print_data *print, struct fp_img *img, void *user_data);
 void enroll_stop_cb(struct fp_dev *dev, void *user_data);
-// void identify_cb(struct fp_dev *dev, int result, size_t match_offset, struct fp_img *img, void *user_data);
-// void identify_stop_cb(struct fp_dev *dev, void *user_data);
+void identify_cb(struct fp_dev *dev, int result, size_t match_offset, struct fp_img *img, void *user_data);
+void identify_stop_cb(struct fp_dev *dev, void *user_data);
 
 #endif

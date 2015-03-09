@@ -22,7 +22,18 @@ export enum fp_enroll_result
     ENROLL_RETRY_TOO_SHORT = 101,
     ENROLL_RETRY_CENTER_FINGER = 102,
     ENROLL_RETRY_REMOVE_FINGER = 103,
-    ENROLL_CANCELLED = 200 // custom
+    ENROLL_CANCELLED = 200 // custom, for async
+}
+
+export enum fp_verify_result
+{ 
+    VERIFY_NO_MATCH = 0, 
+    VERIFY_MATCH = 1, 
+    VERIFY_RETRY = 100, 
+    VERIFY_RETRY_TOO_SHORT = 101, 
+    VERIFY_RETRY_CENTER_FINGER = 102, 
+    VERIFY_RETRY_REMOVE_FINGER = 103,
+    VERIFY_CANCELLED = 200 // custom, for async
 }
 
 export enum fp_stop_result
