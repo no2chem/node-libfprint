@@ -31,7 +31,7 @@ export declare class fpreader {
     public img_height: number;
     public close: () => void;
     public update_database: (fplist: string[]) => void;
-    public start_enroll: (callback: (err: any, result: fp_enroll_result, fpdata: Buffer, fpimage: Buffer, height: Number, width: Number) => void) => void;
+    public start_enroll: (callback: (err: any, result: fp_enroll_result, fpdata: String, fpimage: Buffer, height: Number, width: Number) => void) => void;
     public stop_enroll: (callback: (err: any, result: any) => void) => void;
     public start_identify: (callback: (err: any, result: fp_verify_result, fpindex: Number, fpimage: Buffer, height: Number, width: Number) => void) => void;
     public stop_identify: (callback: (err: any, result: any) => void) => void;
