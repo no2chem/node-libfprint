@@ -56,6 +56,11 @@ export class fpreader {
         this.wrapped.close();
     }
 
+    // update the database
+    update_database = (fplist: string[]) : void => {
+        this.wrapped.update_database(fplist);
+    }
+
     // Start enrolling a fingerprint
     start_enroll = (callback : (err, result : fp_enroll_result, fpdata : Buffer, fpimage: Buffer, height : Number, width : Number) => void) : void => {
     
