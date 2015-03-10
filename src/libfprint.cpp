@@ -422,7 +422,7 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
         print_data_len = fp_print_data_get_data(print, &print_data);
     }
 
-    hexDump("Test",print_data,print_data_len);
+    //hexDump("Test",print_data,print_data_len);
 
     // TODO we should check for an image first, not all readers support this (ours does)
     fp_img_standardize(img);
@@ -439,7 +439,7 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
     // build args for the callback
     const unsigned int argc = 5;
     Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
-    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
+    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) v8::String::New((char*)print_data, print_data_len) : (Local<Value>) NanNull();
     Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
 
     // fire that callback off
