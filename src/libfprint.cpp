@@ -275,7 +275,7 @@ NAN_METHOD(fpreader::identify_finger)
         identifying = 1;
 
         // ****** TODO this we be an arguement passed in...
-        r->user_array = NULL; // LOAD ME FROM ARGS
+        //r->user_array = NULL; // LOAD ME FROM ARGS
 
         // store a pointer to the callback function for later :)
         r->identify_callback = new NanCallback(args[0].As<Function>());
