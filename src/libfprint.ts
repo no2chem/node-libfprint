@@ -83,8 +83,8 @@ export class fpreader {
                         // check the fpdata for completeness
                         if (fpdata !== null && fpdata !== undefined)
                         {
-                            var data = new Buffer(fpdata.length);
-                            fpdata.copy(data);
+                            var data = new Buffer(fpdata.toString('utf8'),'base64');
+                            //fpdata.copy(data);
                         }
 
                         // shouldn't we check these as well? TODO
