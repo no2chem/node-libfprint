@@ -148,8 +148,10 @@ NAN_METHOD(fpreader::update_database)
     fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
 
     // load the array argument
-    Local<Object> obj = args[0]->ToObject();
-    Local<Array> props = obj->GetPropertyNames();
+    //Local<Object> obj = args[0]->ToObject();
+    //Local<Array> props = obj->GetPropertyNames();
+
+    Local<Array> arr = args[0].As<Array>();
 
     //fp_print_data** user_array;
 
@@ -160,13 +162,13 @@ NAN_METHOD(fpreader::update_database)
         free(r->user_array);
     }
 
-    r->user_array_length = props->Length();
-    r->user_array = (fp_print_data**)malloc(props->Length() * sizeof(fp_print_data*));
+    r->user_array_length = arr->Length();
+    r->user_array = (fp_print_data**)malloc(r->user_array_length * sizeof(fp_print_data*));
 
     // Iterate through args[0], adding each element to our list
-    for(unsigned int i = 0; i < props->Length(); i++) {
+    for(unsigned int i = 0; i < r->user_array_length; i++) {
 
-        String::AsciiValue val(obj->Get(i)->ToString());
+        String::AsciiValue val(arr->Get(i)->ToString());
 
         int length = val.length();
 
@@ -422,10 +424,6 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
         print_data_len = fp_print_data_get_data(print, &print_data);
     }
 
-    char tmp[128];
-    sprintf(tmp, "Test(%d):", print_data_len);
-    hexDump(tmp,print_data,print_data_len);
-
     // TODO we should check for an image first, not all readers support this (ours does)
     fp_img_standardize(img);
     iheight = fp_img_get_height(img);
@@ -441,7 +439,7 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
     // build args for the callback
     const unsigned int argc = 5;
     Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
-    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) v8::String::New((char*)print_data, print_data_len) : (Local<Value>) NanNull();
+    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
     Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
 
     // fire that callback off

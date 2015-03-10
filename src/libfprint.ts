@@ -62,7 +62,7 @@ export class fpreader {
     }
 
     // Start enrolling a fingerprint
-    start_enroll = (callback : (err, result : fp_enroll_result, fpdata : String, fpimage: Buffer, height : Number, width : Number) => void) : void => {
+    start_enroll = (callback : (err, result : fp_enroll_result, fpdata : Buffer, fpimage: Buffer, height : Number, width : Number) => void) : void => {
     
         // tell the fpreader to begin the enroll finger process
         if (!this.wrapped.enroll_finger(
@@ -83,7 +83,8 @@ export class fpreader {
                         // check the fpdata for completeness
                         if (fpdata !== null && fpdata !== undefined)
                         {
-                            var data = fpdata;
+                            var data = new Buffer(fpdata.length);
+                            fpdata.copy(data);
                         }
 
                         // shouldn't we check these as well? TODO
