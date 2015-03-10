@@ -139,8 +139,38 @@ NAN_GETTER(fpreader::img_height)
 /****** begin functions of interest ******/
 NAN_METHOD(fpreader::update_database)
 {
-    v8::Handle<v8::Object> obj = args[0].As<Object>;
-    
+    NanScope();
+
+    // get the reader's handle
+    fpreader* r = ObjectWrap::Unwrap<fpreader>(args.This());
+
+    // load the array argument
+    Local<Object> obj = args[0]->ToObject();
+    Local<Array> props = obj->GetPropertyNames();
+
+    //fp_print_data** user_array;
+
+    if (r->user_array != NULL) {
+        for (int i = 0; i < r->user_array_length; i++) {
+            fp_print_data_free(r->user_array[i]);
+        }
+        free(r->user_array);
+    }
+
+    r->user_array_length = props->Length();
+    r->user_array = (fp_print_data**)malloc(props->Length() * sizeof(fp_print_data*));
+
+    // Iterate through args[0], adding each element to our list
+    for(unsigned int i = 0; i < props->Length(); i++) {
+
+        String::AsciiValue val(obj->Get(i)->ToString());
+
+        int length = val.length();
+
+        r->user_array[i] = fp_print_data_from_data( (unsigned char *)*val, (size_t)length);
+    }
+
+    NanReturnValue(NanTrue());
 }
 
 // really should be using a mutex to lock the reader when it's in use
