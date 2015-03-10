@@ -581,10 +581,10 @@ void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *
     fp_async_identify_stop(r->_dev, &identify_stop_cb, r);
 
     // if the result of the callback is a success, happy day
-    if (result == FP_VERIFY_MATCH)
-    {
+    //if (result == FP_VERIFY_MATCH)
+    //{
         // TODO do something with match_offset? convert to integer?
-    }
+    //}
 
     // TODO we should check for an image first, not all readers support this (ours does)
     fp_img_standardize(img);
@@ -601,8 +601,11 @@ void fpreader::IdentifyCallback(int result, size_t match_offset, struct fp_img *
     // build args for the callback
     const unsigned int argc = 5;
     Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
-    Local<Value> fpindex = (result == FP_ENROLL_COMPLETE) ? NanNew(static_cast<int>(match_offset)) : NanNew(-1);
+    Local<Value> fpindex = (result == FP_VERIFY_MATCH) ? NanNew(static_cast<int>(match_offset)) : NanNew(-1);
     Local<Value> argv[argc] = { NanNew(result), fpindex, fpimage, NanNew(iheight), NanNew(iwidth) };
+
+    FILE* f = fopen("/tmp/test","w");
+    fprintf(f,"%d %d\n\n", fpindex, result);
 
     // fire that callback off
     identifying = 0;
