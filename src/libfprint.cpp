@@ -8,6 +8,102 @@ Persistent<Function> fpreader::constructor;
 static struct fp_dscv_dev ** devices = NULL;
 static unsigned int count;
 
+#include <stdint.h>
+#include <stdlib.h>
+
+void build_decoding_table();
+
+static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                                'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                                'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                                'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+                                'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                                'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                                'w', 'x', 'y', 'z', '0', '1', '2', '3',
+                                '4', '5', '6', '7', '8', '9', '+', '/'};
+static char *decoding_table = NULL;
+static int mod_table[] = {0, 2, 1};
+
+
+char *base64_encode(const unsigned char *data,
+                    size_t input_length,
+                    size_t *output_length) {
+
+    *output_length = 4 * ((input_length + 2) / 3);
+
+    char *encoded_data = (char *)malloc(*output_length);
+    if (encoded_data == NULL) return NULL;
+
+    for (int i = 0, j = 0; i < input_length;) {
+
+        uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_b = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_c = i < input_length ? (unsigned char)data[i++] : 0;
+
+        uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
+
+        encoded_data[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
+        encoded_data[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
+        encoded_data[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
+        encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+    }
+
+    for (int i = 0; i < mod_table[input_length % 3]; i++)
+        encoded_data[*output_length - 1 - i] = '=';
+
+    return encoded_data;
+}
+
+
+unsigned char *base64_decode(const char *data,
+                             size_t input_length,
+                             size_t *output_length) {
+
+    if (decoding_table == NULL) build_decoding_table();
+
+    if (input_length % 4 != 0) return NULL;
+
+    *output_length = input_length / 4 * 3;
+    if (data[input_length - 1] == '=') (*output_length)--;
+    if (data[input_length - 2] == '=') (*output_length)--;
+
+    unsigned char *decoded_data = (unsigned char *)malloc(*output_length);
+    if (decoded_data == NULL) return NULL;
+
+    for (int i = 0, j = 0; i < input_length;) {
+
+        uint32_t sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+        uint32_t sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+        uint32_t sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+        uint32_t sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+
+        uint32_t triple = (sextet_a << 3 * 6)
+        + (sextet_b << 2 * 6)
+        + (sextet_c << 1 * 6)
+        + (sextet_d << 0 * 6);
+
+        if (j < *output_length) decoded_data[j++] = (triple >> 2 * 8) & 0xFF;
+        if (j < *output_length) decoded_data[j++] = (triple >> 1 * 8) & 0xFF;
+        if (j < *output_length) decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
+    }
+
+    return decoded_data;
+}
+
+
+void build_decoding_table() {
+
+    decoding_table = (char *)malloc(256);
+
+    for (int i = 0; i < 64; i++)
+        decoding_table[(unsigned char) encoding_table[i]] = i;
+}
+
+
+void base64_cleanup() {
+    free(decoding_table);
+}
+
 NAN_METHOD(init)
 {
     NanScope();
@@ -211,7 +307,12 @@ NAN_METHOD(fpreader::update_database)
 
         int length = val.length();
 
-        r->user_array[i] = fp_print_data_from_data( (unsigned char *)*val, (size_t)length);
+        size_t decoded_len;
+        unsigned char * decoded = base64_decode((char *)*val, (size_t)length, &decoded_len);
+
+        r->user_array[i] = fp_print_data_from_data( decoded, decoded_len);
+
+        free(decoded);
 
         char tmp[128];
         sprintf(tmp, "Test(%d):", length);
@@ -429,6 +530,9 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
         print_data_len = fp_print_data_get_data(print, &print_data);
     }
 
+    size_t encoded_len;
+    char* encoded_data = base64_encode(print_data, print_data_len, &encoded_len);
+
     char tmp[128];
     sprintf(tmp, "Test(%d):", print_data_len);
     hexDump(tmp,print_data,print_data_len);
@@ -448,12 +552,15 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
     // build args for the callback
     const unsigned int argc = 5;
     Local<Value> fpimage = (isize == 0) ? (Local<Value>) NanNull() : (Local<Value>) NanNewBufferHandle(image_data, isize);
-    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
+    //Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)print_data, print_data_len) : (Local<Value>) NanNull();
+    Local<Value> fpdata = (result == FP_ENROLL_COMPLETE) ? (Local<Value>) NanNewBufferHandle((char*)encoded_data, encoded_len) : (Local<Value>) NanNull();
     Local<Value> argv[argc] = { NanNew(result), fpdata, fpimage, NanNew(iheight), NanNew(iwidth) };
 
     // fire that callback off
     enrolling = 0;
     r->enroll_callback->Call(argc, argv);
+
+    fp_print_data_free(print);
 }
 
 // this handles the enrollment stop callback (hint: does not do anything)
