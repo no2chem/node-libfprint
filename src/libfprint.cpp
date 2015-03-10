@@ -63,6 +63,8 @@ fpreader::fpreader(unsigned int handle)  {
     // timeout for the event handler
     this->handle_fp_timeout.tv_sec = 0;
     this->handle_fp_timeout.tv_usec = 100*1000;
+
+    this->user_array = NULL;
 }
 
 fpreader::~fpreader() {
