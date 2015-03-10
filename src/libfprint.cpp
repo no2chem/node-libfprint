@@ -422,7 +422,9 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
         print_data_len = fp_print_data_get_data(print, &print_data);
     }
 
-    //hexDump("Test",print_data,print_data_len);
+    char tmp[128];
+    sprintf(tmp, "Test(%d):", print_data_len);
+    hexDump(tmp,print_data,print_data_len);
 
     // TODO we should check for an image first, not all readers support this (ours does)
     fp_img_standardize(img);
