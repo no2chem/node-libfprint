@@ -83,7 +83,7 @@ export class fpreader {
                         // check the fpdata for completeness
                         if (fpdata !== null && fpdata !== undefined)
                         {
-                            var data = new Buffer(fpdata.toString('utf8'),'base64');
+                            //var data = new Buffer(fpdata.toString('utf8'),'base64');
                             //fpdata.copy(data);
                         }
 
@@ -92,7 +92,7 @@ export class fpreader {
                         fpimage.copy(image);
 
                         // callback to fp_server
-                        callback(err, result, data, image, height, width);
+                        callback(err, result, fpdata, image, height, width);
                     }
                 }
         )) {
