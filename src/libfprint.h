@@ -32,6 +32,7 @@ class fpreader : public node::ObjectWrap {
         static NAN_METHOD(identify_finger);
         static NAN_METHOD(stop_identify_finger);
         static NAN_METHOD(handle_events);
+        static NAN_METHOD(update_database);
 
         static NAN_GETTER(enroll_stages);
         static NAN_GETTER(supports_imaging);

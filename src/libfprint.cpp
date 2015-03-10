@@ -82,6 +82,7 @@ void fpreader::Init(Handle<Object> exports) {
     NODE_SET_PROTOTYPE_METHOD(tpl, "identify_finger", identify_finger);
     NODE_SET_PROTOTYPE_METHOD(tpl, "stop_identify_finger", stop_identify_finger);
     NODE_SET_PROTOTYPE_METHOD(tpl, "handle_events", handle_events);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "update_database", update_database);
 
     tpl->PrototypeTemplate()->SetAccessor(NanNew("enroll_stages"), fpreader::enroll_stages);
     tpl->PrototypeTemplate()->SetAccessor(NanNew("supports_imaging"), fpreader::supports_imaging);
@@ -136,6 +137,11 @@ NAN_GETTER(fpreader::img_height)
 
 
 /****** begin functions of interest ******/
+NAN_METHOD(fpreader::update_database)
+{
+    v8::Handle<v8::Object> obj = args[0].As<Object>;
+    
+}
 
 // really should be using a mutex to lock the reader when it's in use
 int enrolling = 0;
