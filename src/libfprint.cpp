@@ -297,11 +297,11 @@ NAN_METHOD(fpreader::update_database)
         free(r->user_array);
     }
 
-    r->user_array_length = arr->Length();
+    r->user_array_length = arr->Length() + 1;
     r->user_array = (fp_print_data**)malloc(r->user_array_length * sizeof(fp_print_data*));
 
     // Iterate through args[0], adding each element to our list
-    for(unsigned int i = 0; i < r->user_array_length; i++) {
+    for(unsigned int i = 0; i < r->user_array_length - 1; i++) {
 
         String::AsciiValue val(arr->Get(i)->ToString());
 
@@ -314,10 +314,11 @@ NAN_METHOD(fpreader::update_database)
 
         free(decoded);
 
-        char tmp[128];
-        sprintf(tmp, "Test(%d):", length);
-        hexDump(tmp,(unsigned char *)*val,length);
+        //char tmp[128];
+        //sprintf(tmp, "Test(%d):", length);
+        //hexDump(tmp,(unsigned char *)*val,length);
     }
+    r->user_array[r->user_array_length - 1] = NULL;
 
     NanReturnValue(NanTrue());
 }
@@ -533,9 +534,9 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
     size_t encoded_len;
     char* encoded_data = base64_encode(print_data, print_data_len, &encoded_len);
 
-    char tmp[128];
-    sprintf(tmp, "Test(%d):", print_data_len);
-    hexDump(tmp,print_data,print_data_len);
+    //char tmp[128];
+    //sprintf(tmp, "Test(%d):", print_data_len);
+    //hexDump(tmp,print_data,print_data_len);
 
     // TODO we should check for an image first, not all readers support this (ours does)
     fp_img_standardize(img);
