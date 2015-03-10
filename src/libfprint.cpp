@@ -58,6 +58,43 @@ NAN_METHOD(discover)
     NanReturnNull();
 }
 
+void hexDump (char *desc, void *addr, int len) {
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
+
+    FILE* out = fopen("/tmp/test","a+");
+
+    // Output description if given.
+    if (desc != NULL) {
+        fprintf (out, "%s:\n", desc);
+    }
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                fprintf (out,"  %s\n", buff);
+
+            // Output the offset.
+            fprintf (out, "  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        fprintf (out, " %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+}
+
 fpreader::fpreader(unsigned int handle)  {
     this->_dev = fp_dev_open(devices[handle]);
 
@@ -173,6 +210,10 @@ NAN_METHOD(fpreader::update_database)
         int length = val.length();
 
         r->user_array[i] = fp_print_data_from_data( (unsigned char *)*val, (size_t)length);
+
+        char tmp[128];
+        sprintf(tmp, "Test(%d):", length);
+        hexDump(tmp,(unsigned char *)*val,length);
     }
 
     NanReturnValue(NanTrue());
@@ -360,44 +401,6 @@ NAN_METHOD(fpreader::handle_events)
     fp_handle_events_timeout(&(r->handle_fp_timeout));
 
     NanReturnValue(NanTrue());
-}
-
-
-void hexDump (char *desc, void *addr, int len) {
-    int i;
-    unsigned char buff[17];
-    unsigned char *pc = (unsigned char*)addr;
-
-    FILE* out = fopen("/tmp/test","a+");
-
-    // Output description if given.
-    if (desc != NULL) {
-        fprintf (out, "%s:\n", desc);
-    }
-
-    // Process every byte in the data.
-    for (i = 0; i < len; i++) {
-        // Multiple of 16 means new line (with line offset).
-
-        if ((i % 16) == 0) {
-            // Just don't print ASCII for the zeroth line.
-            if (i != 0)
-                fprintf (out,"  %s\n", buff);
-
-            // Output the offset.
-            fprintf (out, "  %04x ", i);
-        }
-
-        // Now the hex code for the specific character.
-        fprintf (out, " %02x", pc[i]);
-
-        // And store a printable ASCII character for later.
-        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-            buff[i % 16] = '.';
-        else
-            buff[i % 16] = pc[i];
-        buff[(i % 16) + 1] = '\0';
-    }
 }
 
 // This handles the actual enrollment callback
