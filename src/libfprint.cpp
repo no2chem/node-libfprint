@@ -1,4 +1,5 @@
 #include "libfprint.h"
+#include <stdio.h>
 
 using namespace v8;
 
@@ -359,6 +360,44 @@ NAN_METHOD(fpreader::handle_events)
     NanReturnValue(NanTrue());
 }
 
+
+void hexDump (char *desc, void *addr, int len) {
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
+
+    FILE* out = fopen("/tmp/test","a+");
+
+    // Output description if given.
+    if (desc != NULL) {
+        fprintf (out, "%s:\n", desc);
+    }
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                fprintf (out,"  %s\n", buff);
+
+            // Output the offset.
+            fprintf (out, "  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        fprintf (out, " %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+}
+
 // This handles the actual enrollment callback
 void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, struct fp_img* img) {
 
@@ -382,6 +421,8 @@ void fpreader::EnrollStageCallback(int result, struct fp_print_data* print, stru
     {
         print_data_len = fp_print_data_get_data(print, &print_data);
     }
+
+    hexDump("Test",print_data,print_data_len);
 
     // TODO we should check for an image first, not all readers support this (ours does)
     fp_img_standardize(img);
