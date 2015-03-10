@@ -17,6 +17,7 @@ CFLAGS_Debug := \
 	-pthread \
 	-m32 \
 	-g \
+	-g \
 	-O0
 
 # Flags passed to only C files.
@@ -45,6 +46,7 @@ CFLAGS_Release := \
 	-Wno-unused-parameter \
 	-pthread \
 	-m32 \
+	-g \
 	-O2 \
 	-fno-strict-aliasing \
 	-fno-tree-vrp \

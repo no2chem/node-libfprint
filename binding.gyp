@@ -6,7 +6,8 @@
         "include_dirs": [
             "<!(node -e \"require('nan')\")"
         ],
-        "libraries": [ '-lfprint']
+        "libraries": [ '-lfprint'],
+        "cflags": ['-g']
     }
     ,
     {
